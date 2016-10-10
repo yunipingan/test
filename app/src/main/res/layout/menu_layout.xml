@@ -52,6 +52,7 @@
                 android:layout_height="fill_parent"
                 android:background="@drawable/menu_line"
                 android:layout_weight="1"
+                android:id="@+id/internetConnectionMonitorBtn"
                 android:text="联网监控" />
             <Button
                 android:layout_width="wrap_content"
