@@ -30,8 +30,7 @@ public class TrafficMonitorService extends Service {
         Log.v("TrafficService","startCommand");
 //      flags = START_STICKY;
         startMonitor();
-        return super.onStartCommand(intent, flags, startId);
-        //return START_STICKY;
+        return START_STICKY;
     }
 
 //    @Override
