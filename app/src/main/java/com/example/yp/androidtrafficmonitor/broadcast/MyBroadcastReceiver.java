@@ -6,8 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-import com.example.yp.androidtrafficmonitor.activity.TestActivity;
-import com.example.yp.androidtrafficmonitor.application.AppApplication;
 import com.example.yp.androidtrafficmonitor.service.TrafficMonitorService;
 
 public class MyBroadcastReceiver extends BroadcastReceiver {
@@ -19,7 +17,7 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
         // TODO: This method is called when the BroadcastReceiver is receiving
         // an Intent broadcast.
 
-        /*boolean isServiceRunning = false;
+        boolean isServiceRunning = false;
 
         Log.v("Broadcast","MyBroadcastReceiver1");
         if (intent.getAction().equals(Intent.ACTION_TIME_TICK)) {
@@ -28,8 +26,9 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
             Log.v("Broadcast","MyBroadcastReceiver2");
             ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
             for (ActivityManager.RunningServiceInfo service :manager.getRunningServices(Integer.MAX_VALUE)) {
-                Log.v("Broadcast","MyBroadcastReceiver");
-                if("TrafficMonitorService".equals(service.service.getClassName()))
+                Log.v("Broadcast",service.service.getClassName());
+
+                if("com.example.yp.androidtrafficmonitor.service.TrafficMonitorService".equals(service.service.getClassName()))
                 {
                     Log.v("Broadcast","MyBroadcastReceiver3");
                     isServiceRunning = true;
@@ -42,6 +41,6 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
                 context.startService(i);
             }
 
-        }*/
+        }
     }
 }

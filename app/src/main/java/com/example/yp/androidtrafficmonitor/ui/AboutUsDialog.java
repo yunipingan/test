@@ -1,4 +1,4 @@
-package com.example.yp.androidtrafficmonitor.layout;
+package com.example.yp.androidtrafficmonitor.ui;
 
 import android.app.Dialog;
 import android.content.Context;

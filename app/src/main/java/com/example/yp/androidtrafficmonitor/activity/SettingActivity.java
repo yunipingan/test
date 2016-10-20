@@ -1,5 +1,7 @@
 package com.example.yp.androidtrafficmonitor.activity;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -25,12 +27,15 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
     private ArrayAdapter arrayAdapter;
     private Button backBtn;
     private Button sureBtn;
+    private SharedPreferences sp;
+    private SharedPreferences.Editor editor;
+    private String st;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.parameter_setting_layout);
         operatorSpinner = (Spinner) findViewById(R.id.spinner);
-        backBtn = (Button) findViewById(R.id.backBtn);
+        backBtn = (Button) findViewById(R.id.backBtn4);
         sureBtn = (Button) findViewById(R.id.surBtn);
         backBtn.setOnClickListener(this);
         sureBtn.setOnClickListener(this);
@@ -44,6 +49,7 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
         operatorSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             public void onItemSelected(AdapterView<?> parent, View view,
                                        int position, long id) {
+                st = arrayList.get(position);
             }
 
             @Override
@@ -58,13 +64,21 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
     public void onClick(View view) {
 
         switch (view.getId()){
-            case R.id.backBtn:this.finish();break;
+            case R.id.backBtn4:this.finish();break;
             case R.id.surBtn :saveSettingInfor();
         }
 
     }
 
     void saveSettingInfor(){
+
+        sp = getSharedPreferences("settingInfor", Context.MODE_PRIVATE);
+        editor = sp.edit();
+        editor.putString("运营商",st);
+        editor.putInt("月结日",0);
+        editor.putInt("流量警戒值",0);
+        editor.putInt("通用流量",0);
+        editor.putInt("闲时流量",0);
         Toast.makeText(getApplicationContext(),"保存成功", Toast.LENGTH_SHORT).show();
     }
 

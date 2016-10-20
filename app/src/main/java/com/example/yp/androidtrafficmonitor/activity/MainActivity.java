@@ -1,18 +1,24 @@
 package com.example.yp.androidtrafficmonitor.activity;
 
 import android.app.Dialog;
-import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.net.TrafficStats;
+import android.content.SharedPreferences;
+import android.database.ContentObserver;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.telephony.SmsManager;
+import android.telephony.SmsMessage;
+import android.text.format.Formatter;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -21,12 +27,11 @@ import android.widget.Toast;
 
 import com.example.yp.androidtrafficmonitor.R;
 import com.example.yp.androidtrafficmonitor.beans.AppInfo;
-import com.example.yp.androidtrafficmonitor.broadcast.MyBroadcastReceiver;
-import com.example.yp.androidtrafficmonitor.service.TrafficMonitorBindService;
 import com.example.yp.androidtrafficmonitor.service.TrafficMonitorService;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener{
 
@@ -35,92 +40,92 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button aboutUsBtn;
     private Button settingBtn;
     private Button interConnMonitorBtn;
+    private Button lineChartBtn;
     private TextView uidTraffic;
-    private String result;
+    private TextView allTrafficTV;
 
-    ArrayList<AppInfo> appList = new ArrayList<AppInfo>();
+    SharedPreferences sharedPreferences;
 
-    TrafficMonitorBindService service;
+    private long trafficTemp;
 
-
-    ServiceConnection conn = new ServiceConnection() {
-
-        @Override//当服务跟启动源断开的时候 会自动回调
-        public void onServiceDisconnected(ComponentName name) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override//当服务跟启动源连接的时候 会自动回调
-        public void onServiceConnected(ComponentName name, IBinder binder) {
-            // TODO Auto-generated method stub
-            service = ((TrafficMonitorBindService.MyBinder)binder).getService();
+    private long mobileTraffic;
+    private long mobileTemp;
+    private Handler handler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            //allTrafficTV.setText(Formatter.formatFileSize(getApplicationContext(),traffic)+",其中手机流量为"+Formatter.formatFileSize(getApplicationContext(),mobile));
+            if(msg.what == 1){
+                allTrafficTV.setText(Formatter.formatFileSize(getApplicationContext(),mobileTraffic));
+            }
         }
     };
 
+
+    ArrayList<AppInfo> appList = new ArrayList<AppInfo>();
+
+
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Intent intent = new Intent(MainActivity.this,TrafficMonitorService.class);
+        startService(intent);
+
         setContentView(R.layout.menu_layout);
         /*getAppTrafficList();
         Intent intent = new Intent(MainActivity.this,TrafficMonitorBindService.class);
         intent.putExtra("applist",appList);
         bindService(intent, conn, Service.BIND_AUTO_CREATE);*/
         Init();
+        sharedPreferences = getSharedPreferences("trafficInfor", Context.MODE_PRIVATE);
+
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while(true){
+                //traffic = sharedPreferences.getLong("traffic",0);
+                mobileTraffic = sharedPreferences.getLong("mobile",0);
+                if(mobileTraffic!=mobileTemp) {
+                    mobileTemp = mobileTraffic;
+                    Message msg = new Message();
+                    msg.what = 1;
+                    handler.sendMessage(msg);
+                }
+                    try {
+                        Thread.sleep(5000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }).start();
+
+
+
+
     }
 
     void Init(){
         showBtn=(Button) findViewById(R.id.trafficMonitorBtn);
         queryTrafficBtn = (Button) findViewById(R.id.queryTraffic);
         aboutUsBtn = (Button) findViewById(R.id.aboutUs);
-        uidTraffic = (TextView) findViewById(R.id.uidTraffic);
         settingBtn = (Button) findViewById(R.id.setting);
-        interConnMonitorBtn = (Button) findViewById(R.id.internetConnectionMonitorBtn);
+        interConnMonitorBtn = (Button) findViewById(R.id.interConnMonitorBtn);
+        lineChartBtn = (Button) findViewById(R.id.lineChartBtn);
+
+        allTrafficTV = (TextView) findViewById(R.id.allTraffic);
+        uidTraffic = (TextView) findViewById(R.id.uidTraffic);
 
         aboutUsBtn.setOnClickListener(this);
         showBtn.setOnClickListener(this);
         queryTrafficBtn.setOnClickListener(this);
         settingBtn.setOnClickListener(this);
         interConnMonitorBtn.setOnClickListener(this);
+        lineChartBtn.setOnClickListener(this);
     }
 
-    /*public void getAppTrafficList(){
-        AppInfo appInfo = null;
-        //获取所有的安装在手机上的应用软件的信息，并且获取这些软件里面的权限信息
-    PackageManager pm=getPackageManager();//获取系统应用包管理
-    //获取每个包内的androidmanifest.xml信息，它的权限等等
-    List<PackageInfo> pinfos=pm.getInstalledPackages
-            ( PackageManager.GET_PERMISSIONS);
-        //遍历每个应用包信息
-        for(PackageInfo info:pinfos){
-            //请求每个程序包对应的androidManifest.xml里面的权限
-            String[] premissions=info.requestedPermissions;
-            if(premissions!=null && premissions.length>0){
-                //找出需要网络服务的应用程序
-                for(String premission : premissions){
-                    if("android.permission.INTERNET".equals(premission)){
-                        //获取每个应用程序在操作系统内的进程id
-                        int uId=info.applicationInfo.uid;
-                        //如果返回-1，代表不支持使用该方法，注意必须是2.2以上的
-                        long rx= TrafficStats.getUidRxBytes(uId);
-                        //如果返回-1，代表不支持使用该方法，注意必须是2.2以上的
-                        long tx= TrafficStats.getUidTxBytes(uId);
-                        if(rx<0 || tx<0){
-                            continue;
-                        }else{
-                            appInfo = new AppInfo();
-                            appInfo.appName = String.valueOf(info.applicationInfo.loadLabel(pm));
-                            //appInfo.appIcon = info.applicationInfo.loadIcon(pm);
-                            //result = result + info.applicationInfo.loadLabel(pm)+ Formatter.formatFileSize(this, rx+tx) + "\n";
-                            appList.add(appInfo);
-                        }
-                    }
-                }
-            }
-        }
 
-        //uidTraffic.setText(result);
-    }*/
 
     @Override
     public void onClick(View view) {
@@ -132,15 +137,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 startActivity(intent);
                 break;
             }
-            case R.id.internetConnectionMonitorBtn:{
-                Log.v("start","开始");
-                /*Intent intent = new Intent(MainActivity.this, TrafficMonitorService.class);
+            case R.id.interConnMonitorBtn:{
+                Intent intent = new Intent();
+                intent.setClass(MainActivity.this, InterConnMonitorActivity.class);
+                startActivity(intent);
+                /*Log.v("start","开始");
+                Intent intent = new Intent(MainActivity.this, TrafficMonitorService.class);
                 intent.setAction("com.yp.test");
-                startService(intent);*/
+                startService(intent);
                 IntentFilter intentFilter = new IntentFilter(Intent.ACTION_TIME_TICK);
                 MyBroadcastReceiver myBroadcastReceiver = new MyBroadcastReceiver();
                 registerReceiver(myBroadcastReceiver,intentFilter);
-                Log.v("end","结束");
+                Log.v("end","结束");*/
                 break;
             }
 
@@ -160,8 +168,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 startActivity(intent);
 
                 break;
-
             }
+            case R.id.lineChartBtn:{
+                Intent intent = new Intent();
+                intent.setClass(MainActivity.this,GraphChartActivity.class);
+                startActivity(intent);
+                break;
+            }
+
         }
 
     }
@@ -173,7 +187,52 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     int i = sms_content.length();
     smsManager.sendTextMessage(phone_number, null, sms_content, null, null);
     Toast.makeText(MainActivity.this, "发送完毕", Toast.LENGTH_SHORT).show();
+    MainActivity.this.getContentResolver().registerContentObserver(
+                Uri.parse("content://sms"), true, new SmsObserver(new Handler()));
+        Log.v("Observer","StartObserver");
 }
+
+    private class SmsObserver extends ContentObserver {
+
+        public SmsObserver(Handler handler) {
+            super(handler);
+            Log.v("Observer","StartObserver1");
+            // TODO Auto-generated constructor stub
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            Log.v("Observer","StartObserver2");
+            StringBuilder sb = new StringBuilder();
+            Cursor cursor = getContentResolver().query(Uri.parse("content://sms/inbox"), null, null, null, null);
+            cursor.moveToNext();
+            sb.append("body=" + cursor.getString(cursor.getColumnIndex("body")));
+            Log.i("Observer", sb.toString());
+            cursor.close();
+            Pattern pat = Pattern.compile("已用(.*?)M");//解析出"已使用...M"样式的语句
+            Matcher mat = pat.matcher(sb);
+
+
+            if(mat.find()){
+                String st = mat.group();
+                Log.v("ObserverLast1",st);
+                mobileTraffic = Long.valueOf(st.substring(2,st.length()))*1024*1024;
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putLong("mobile",mobileTraffic);
+                Message msg = new Message();
+                msg.what = 1;
+                handler.sendMessage(msg);
+            }
+            /*Pattern pats = Pattern.compile("[\\d]+\\.[\\d]+");//解析出"已使用...M"语句中的数字
+            Matcher mats = pat.matcher(mat.group());
+            if(mats.find()){
+                Log.v("ObserverLast2",mat.group());
+            }*/
+            Log.v("Observer","StartObserver3");
+            super.onChange(selfChange);
+        }
+    }
+
 
 }
 

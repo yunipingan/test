@@ -9,19 +9,27 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="3"
+        android:orientation="vertical"
+        android:gravity="center"
         android:background="#54C590"
         >
-
-        <ScrollView
+        <TextView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <TextView
-                android:id="@+id/uidTraffic"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                />
-        </ScrollView>
+            android:layout_height="wrap_content"
+            android:textSize="30dp"
+            android:textStyle="normal"
+            android:gravity="center"
+            android:text="本月已用流量"
+            />
+        <TextView
+            android:id="@+id/allTraffic"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="30dp"
+            android:textStyle="normal"
+            android:gravity="center"
+            android:text="0M"
+            />
 
     </LinearLayout>
 
@@ -52,14 +60,15 @@
                 android:layout_height="fill_parent"
                 android:background="@drawable/menu_line"
                 android:layout_weight="1"
-                android:id="@+id/internetConnectionMonitorBtn"
+                android:id="@+id/interConnMonitorBtn"
                 android:text="联网监控" />
             <Button
                 android:layout_width="wrap_content"
                 android:layout_height="fill_parent"
                 android:background="@drawable/menu_line"
                 android:layout_weight="1"
-                android:text="图标统计" />
+                android:id="@+id/lineChartBtn"
+                android:text="折线统计" />
 
         </LinearLayout>
 
@@ -89,7 +98,7 @@
                 android:layout_height="fill_parent"
                 android:background="@drawable/menu_line"
                 android:layout_weight="1"
-                android:text="查询流量"
+                android:text="短信校正"
                 android:id="@+id/queryTraffic" />
 
         </LinearLayout>
