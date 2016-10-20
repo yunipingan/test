@@ -80,7 +80,6 @@ public class GraphChartActivity extends AppCompatActivity{
     }
 
 
-
     public int getCurrentDay(){
         SimpleDateFormat sf = new SimpleDateFormat("dd");
         Calendar c = Calendar.getInstance();
